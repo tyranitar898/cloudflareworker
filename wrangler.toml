@@ -1,0 +1,6 @@
+name = "ryancloudworker"
+type = "javascript"
+account_id = "8b843e59ecfbbb960bbd08801e60def9"
+workers_dev = true
+route = ""
+zone_id = ""
