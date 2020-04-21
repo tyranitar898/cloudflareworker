@@ -53,6 +53,13 @@ const rewriter = new HTMLRewriter();
  */
 
 async function handleRequest(request) {
+  const FAILEDFETCHRESPONSE = new Response(
+    "Fetch didn't work so you're stuck with this!",
+    {
+      headers: { "content-type": "text/plain" },
+    }
+  );
+
   let cookieString = request.headers.get("cookie");
   console.log(cookieString);
 
@@ -76,17 +83,20 @@ async function handleRequest(request) {
       randPos = Math.floor(Math.random() * variArray.length);
       oneOfVariants = variArray[randPos];
 
-      //adding
       cookieString = oneOfVariants;
     } catch (err) {
       console.log(err);
-      return new Response("Fetch didn't work so you're stuck with this!", {
-        headers: { "content-type": "text/plain" },
-      });
+      return;
     }
   }
 
-  var res2 = await fetch(cookieString);
+  let res2;
+  try {
+    res2 = await fetch(cookieString);
+  } catch (err) {
+    console.log(err);
+    res2 = FAILEDFETCHRESPONSE;
+  }
 
   //attach handlers depending on what variation we get using .on()
   rewriter
