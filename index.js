@@ -86,7 +86,7 @@ async function handleRequest(request) {
       cookieString = oneOfVariants;
     } catch (err) {
       console.log(err);
-      return;
+      return FAILEDFETCHRESPONSE;
     }
   }
 
