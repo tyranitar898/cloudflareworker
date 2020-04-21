@@ -1,7 +1,7 @@
 addEventListener("fetch", (event) => {
   event.respondWith(handleRequest(event.request));
 });
-// responsible for rewriting the html doms depending on the variant url given
+//Responsible for rewriting the html doms depending on the variant url provided
 class VariantWebRewriter {
   constructor(variantUrl) {
     this.variantUrl = variantUrl;
@@ -21,9 +21,7 @@ class VariantWebRewriter {
       if (tagOfElement === "p" && idOfElement === "description")
         element.setInnerContent("Ryan's UofT projects");
       if (tagOfElement === "a" && idOfElement === "url") {
-        element.setInnerContent(
-          "Projects that I made in school that im proud of"
-        );
+        element.setInnerContent("Ryan Chang's website and school projects");
         element.setAttribute("href", "https://tyranitar898.github.io/UofT/");
       }
     } else if (
@@ -35,12 +33,16 @@ class VariantWebRewriter {
       if (tagOfElement === "h1" && idOfElement === "title");
       element.setInnerContent("Variation Numero Dos");
       if (tagOfElement === "p" && idOfElement === "description")
-        element.setInnerContent("UofT's Website");
+        element.setInnerContent("What Ryan Chang is currently reading");
       if (tagOfElement === "a" && idOfElement === "url") {
-        element.setInnerContent("The offical website of my University");
-        element.setAttribute("href", "https://www.utoronto.ca/");
+        element.setInnerContent("How to Build a Multiplayer (.io) Web Game");
+        element.setAttribute(
+          "href",
+          "https://victorzhou.com/blog/build-an-io-game-part-1/#5-client-rendering"
+        );
       }
     }
+    //else do nothing (sice we don't care if its not one of these two urls)
   }
 }
 
@@ -60,102 +62,53 @@ async function handleRequest(request) {
     }
   );
 
+  //cookieString represents the user's variant link stored in the cookie of the browser
+  //Initialized as NULL in the beginning since it will have never been to this site.
   let cookieString = request.headers.get("cookie");
-  console.log(cookieString);
 
   if (cookieString) {
+    //Visited before
     if (cookieString.includes("variants/1")) {
       cookieString = "https://cfw-takehome.developers.workers.dev/variants/1";
     } else {
       cookieString = "https://cfw-takehome.developers.workers.dev/variants/2";
     }
   } else {
+    //Never visited before
     try {
       //Fetch the variants and put them in an array;
-      const res = await fetch(
+      const variantsResponse = await fetch(
         "https://cfw-takehome.developers.workers.dev/api/variants"
       );
-      const data = await res.json();
+      const data = await variantsResponse.json();
       let variArray = data.variants;
 
-      //Get a random variant and put one of them in variable oneOfTwo
-      let oneOfVariants;
+      //Get a random variant and put one of them in variable cookieString
       randPos = Math.floor(Math.random() * variArray.length);
-      oneOfVariants = variArray[randPos];
-
-      cookieString = oneOfVariants;
+      cookieString = variArray[randPos];
     } catch (err) {
       console.log(err);
       return FAILEDFETCHRESPONSE;
     }
   }
 
-  let res2;
+  let responseFromVariant;
   try {
-    res2 = await fetch(cookieString);
+    responseFromVariant = await fetch(cookieString);
   } catch (err) {
     console.log(err);
-    res2 = FAILEDFETCHRESPONSE;
+    responseFromVariant = FAILEDFETCHRESPONSE;
   }
 
-  //attach handlers depending on what variation we get using .on()
+  //Attach handlers depending on what variation we get using .on()
   rewriter
     .on("title", new VariantWebRewriter(cookieString))
     .on("h1#title", new VariantWebRewriter(cookieString))
     .on("p#description", new VariantWebRewriter(cookieString))
     .on("a#url", new VariantWebRewriter(cookieString));
 
-  let finalRes = rewriter.transform(res2);
+  //finalRes is a reponse object with all the proper "transformation" and proper cookie header
+  let finalRes = rewriter.transform(responseFromVariant);
   finalRes.headers.append("Set-Cookie", cookieString);
   return finalRes;
 }
-
-/*
-async function handleRequest(request) {
-  const NAME = "experiment-0";
-  // Responses below are place holders, you could set up
-  // a custom path for each test (e.g. /control/somepath )
-  const TEST_RESPONSE = new Response("Test group"); // fetch('/test/sompath', request)
-  const CONTROL_RESPONSE = new Response("Control group"); // fetch('/control/sompath', request)
-  // Determine which group this requester is in.
-  const cookie = request.headers.get("cookie");
-  if (cookie && cookie.includes(`${NAME}=control`)) {
-    return CONTROL_RESPONSE;
-  } else if (cookie && cookie.includes(`${NAME}=test`)) {
-    return TEST_RESPONSE;
-  } else {
-    // if no cookie then this is a new client, decide a group and set the cookie
-    let group = Math.random() < 0.5 ? "test" : "control"; // 50/50 split
-    let response = group === "control" ? CONTROL_RESPONSE : TEST_RESPONSE;
-    response.headers.append("Set-Cookie", `${NAME}=${group}; path=/`);
-    return response;
-  }
-}*/
-
-/*
-async function handleRequest(request) {
-  try {
-    //Fetch the variants and put them in an array;
-    const res = await fetch(
-      "https://cfw-takehome.developers.workers.dev/api/variants"
-    );
-    const data = await res.json();
-    let variArray = data.variants;
-
-    //Get a random variant and put one of them in variable oneOfTwo
-    let oneOfVariants;
-    randPos = Math.floor(Math.random() * variArray.length);
-    oneOfVariants = variArray[randPos];
-    return fetch(oneOfVariants);
-  } catch (err) {
-    console.log(err);
-    return new Response("Fetch didn't work so you're stuck with this!", {
-      headers: { "content-type": "text/plain" },
-    });
-  }
-}*/
-
-/**
- * Respond with one of the two variants
- * @param {Request} request
- */
